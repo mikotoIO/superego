@@ -1,0 +1,21 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dotenv = "0.15.0"
+lazy_static = "1.4.0"
+serde = { version = "1.0.192", features = ["derive"] }
+serde_json = "1.0.108"
+uuid = { version = "1.6.1", features = ["serde", "v4"] }
+
+rocket = { version = "=0.5.0-rc.4", features = ["json"] }
+sea-orm = { version = "0.12", features = [
+    "runtime-tokio-native-tls",
+    "macros",
+    "sqlx-sqlite",
+    "sqlx-postgres",
+] }
