@@ -3406,6 +3406,7 @@ dependencies = [
  "rocket",
  "serde",
  "serde_json",
+ "sha3",
  "uuid",
 ]
 
