@@ -14,13 +14,11 @@ uuid = { version = "1.6.1", features = ["serde", "v4"] }
 log = "0.4.20"
 
 rocket = { version = "=0.5.0-rc.4", features = ["json"] }
-sea-orm = { version = "0.12", features = [
-    "runtime-tokio-native-tls",
-    "macros",
-    "sqlx-sqlite",
-    "sqlx-postgres",
-] }
 bcrypt = "0.15.0"
 hcaptcha = "2.2.2"
 mail = "0.7.0"
 jsonwebtoken = "9.2.0"
+
+prisma-client-rust = { git = "https://github.com/Brendonovich/prisma-client-rust", tag = "0.6.10", default-features = false, features = [
+    "postgresql",
+] }

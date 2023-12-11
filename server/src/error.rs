@@ -1,10 +1,10 @@
 use std::io::Cursor;
 
 use bcrypt::BcryptError;
+use prisma_client_rust::QueryError;
 use rocket::http::{ContentType, Status};
 use rocket::request::Request;
 use rocket::response::{self, Responder, Response};
-use sea_orm::DbErr;
 
 #[derive(Serialize, Debug)]
 #[serde(tag = "type")]
@@ -12,7 +12,7 @@ pub enum Error {
     NotFound,
     WrongCredentials,
     CaptchaFailed,
-    DatabaseError,
+    DatabaseError { message: String },
     InternalServerError,
 }
 
@@ -35,9 +35,11 @@ impl<'r> Responder<'r, 'r> for Error {
     }
 }
 
-impl From<DbErr> for Error {
-    fn from(_: DbErr) -> Self {
-        Error::DatabaseError
+impl From<QueryError> for Error {
+    fn from(err: QueryError) -> Self {
+        Error::DatabaseError {
+            message: err.to_string(),
+        }
     }
 }
 

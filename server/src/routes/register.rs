@@ -1,10 +1,8 @@
 use rocket::{serde::json::Json, State};
-use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, TransactionTrait};
-use uuid::Uuid;
 
 use crate::{
-    entities::{credential, user},
     error::Error,
+    prisma::{user, PrismaClient},
 };
 
 #[derive(Debug, Deserialize)]
@@ -17,31 +15,34 @@ pub struct RegisterRequest {
 }
 
 #[post("/register", data = "<data>")]
-pub async fn register(
-    db: &State<DatabaseConnection>,
-    data: Json<RegisterRequest>,
-) -> Result<(), Error> {
+pub async fn register(db: &State<PrismaClient>, data: Json<RegisterRequest>) -> Result<(), Error> {
     let db = db.inner();
-    let txn = db.begin().await?;
 
-    let user = user::ActiveModel {
-        id: ActiveValue::Set(Uuid::new_v4().to_string()),
-        username: ActiveValue::Set(data.username.clone()),
-        kind: ActiveValue::set(None),
-        display_name: ActiveValue::Set(data.username.clone()),
-    }
-    .insert(&txn)
-    .await?;
+    db._transaction()
+        .run::<Error, _, _, _>(|db| async move {
+            let user = db
+                .user()
+                .create(
+                    data.username.clone().to_lowercase(),
+                    data.username.clone(),
+                    vec![],
+                )
+                .exec()
+                .await?;
+            let credential = db
+                .credential()
+                .create(
+                    data.email.clone().trim().to_lowercase(),
+                    bcrypt::hash(&data.password, bcrypt::DEFAULT_COST)?,
+                    user::id::equals(user.id.clone()),
+                    vec![],
+                )
+                .exec()
+                .await?;
 
-    let _ = credential::ActiveModel {
-        id: ActiveValue::Set(user.id.clone()),
-        email: ActiveValue::Set(data.email.clone()),
-        passhash: ActiveValue::Set(bcrypt::hash(&data.password, bcrypt::DEFAULT_COST)?),
-    }
-    .insert(&txn)
-    .await?;
-
-    txn.commit().await?;
+            Ok((user, credential))
+        })
+        .await?;
 
     Ok(())
 }

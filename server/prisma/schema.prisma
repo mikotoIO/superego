@@ -1,0 +1,47 @@
+datasource db {
+    provider = "cockroachdb"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    // Corresponds to the cargo alias created earlier
+    provider = "cargo prisma"
+    // The location to generate the client. Is relative to the position of the schema
+    output   = "../src/prisma.rs"
+}
+
+model User {
+    id          String       @id @default(uuid()) @db.Uuid
+    username    String       @unique @db.String(64)
+    userType    String?      @db.String(64)
+    displayName String       @db.String(64)
+    Credential  Credential[]
+    Session     Session[]
+    Service     Service[]
+}
+
+model Credential {
+    id       String @id @default(uuid()) @db.Uuid
+    email    String @unique @db.String(256)
+    passhash String @db.String(256)
+    userId   String @db.Uuid
+    user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+    id        String   @id @default(uuid()) @db.Uuid
+    userId    String   @db.Uuid
+    token     String   @unique @db.String(256)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now()) @db.Timestamp
+    expiresAt DateTime @db.Timestamp
+}
+
+model Service {
+    id          String  @id @default(uuid()) @db.Uuid
+    name        String  @unique @db.String(64)
+    description String? @db.String(256)
+    domain      String  @unique @db.String(128)
+    ownerID     String? @db.Uuid
+    owner       User?   @relation(fields: [ownerID], references: [id])
+}

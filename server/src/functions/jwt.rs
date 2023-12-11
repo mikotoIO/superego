@@ -1,8 +1,8 @@
 use lazy_static::lazy_static;
 
-use crate::entities::user;
-
 use jsonwebtoken::{Algorithm, EncodingKey, Header};
+
+use crate::prisma::user;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -14,7 +14,7 @@ pub struct Claims {
 }
 
 impl Claims {
-    pub fn new(user: &user::Model) -> Self {
+    pub fn new(user: &user::Data) -> Self {
         Claims {
             // 1 hour expiration
             exp: jsonwebtoken::get_current_timestamp() + 60 * 60,

@@ -1,10 +1,9 @@
 use rocket::{serde::json::Json, State};
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
 use crate::{
-    entities::{credential, user},
     error::Error,
     functions::jwt,
+    prisma::{credential, user, PrismaClient},
 };
 
 #[derive(Debug, Deserialize)]
@@ -24,13 +23,15 @@ pub struct LoginResponse {
 
 #[post("/login", data = "<data>")]
 pub async fn login(
-    db: &State<DatabaseConnection>,
+    db: &State<PrismaClient>,
     data: Json<LoginRequest>,
 ) -> Result<Json<LoginResponse>, Error> {
     let db = db.inner();
-    let credential = credential::Entity::find()
-        .filter(credential::Column::Email.eq(data.email.trim().to_lowercase()))
-        .one(db)
+
+    let credential = db
+        .credential()
+        .find_unique(credential::email::equals(data.email.trim().to_lowercase()))
+        .exec()
         .await?
         .ok_or(Error::WrongCredentials)?;
 
@@ -39,8 +40,10 @@ pub async fn login(
         return Err(Error::WrongCredentials);
     }
 
-    let user = user::Entity::find_by_id(credential.id)
-        .one(db)
+    let user = db
+        .user()
+        .find_unique(user::id::equals(credential.id))
+        .exec()
         .await?
         .ok_or(Error::NotFound)?;
 
