@@ -11,6 +11,7 @@ pub struct Model {
     pub id: String,
     pub username: String,
     pub display_name: String,
+    pub kind: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

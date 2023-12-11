@@ -8,6 +8,7 @@ enum User {
     Table,
     Id,
     Username,
+    Kind,
     DisplayName,
 }
 
@@ -64,6 +65,7 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .unique_key(),
                     )
+                    .col(ColumnDef::new(User::Kind).string_len(16))
                     .to_owned(),
             )
             .await?;

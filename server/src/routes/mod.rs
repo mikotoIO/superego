@@ -1,6 +1,7 @@
 use rocket::serde::json::Json;
 
 pub mod login;
+pub mod register;
 
 #[derive(Serialize)]
 pub struct AppInfo {
