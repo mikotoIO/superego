@@ -4,6 +4,7 @@ use bcrypt::BcryptError;
 use rocket::http::{ContentType, Status};
 use rocket::request::Request;
 use rocket::response::{self, Responder, Response};
+use sea_orm::DbErr;
 
 #[derive(Serialize, Debug)]
 #[serde(tag = "type")]
@@ -34,14 +35,20 @@ impl<'r> Responder<'r, 'r> for Error {
     }
 }
 
-impl From<sea_orm::error::DbErr> for Error {
-    fn from(_: sea_orm::error::DbErr) -> Self {
+impl From<DbErr> for Error {
+    fn from(_: DbErr) -> Self {
         Error::DatabaseError
     }
 }
 
 impl From<BcryptError> for Error {
     fn from(_: BcryptError) -> Self {
+        Error::InternalServerError
+    }
+}
+
+impl From<jsonwebtoken::errors::Error> for Error {
+    fn from(_: jsonwebtoken::errors::Error) -> Self {
         Error::InternalServerError
     }
 }

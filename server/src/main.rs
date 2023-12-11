@@ -13,6 +13,7 @@ extern crate serde_json;
 
 pub mod entities;
 pub mod error;
+pub mod functions;
 pub mod routes;
 
 #[launch]

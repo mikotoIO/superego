@@ -1,7 +1,11 @@
 use rocket::{serde::json::Json, State};
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
-use crate::{entities::credential, error::Error};
+use crate::{
+    entities::{credential, user},
+    error::Error,
+    functions::jwt,
+};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -35,10 +39,13 @@ pub async fn login(
         return Err(Error::WrongCredentials);
     }
 
-    todo!("implement the access/refresh token generation");
+    let user = user::Entity::find_by_id(credential.id)
+        .one(db)
+        .await?
+        .ok_or(Error::NotFound)?;
 
     Ok(Json(LoginResponse {
-        access_token: "".to_string(),
-        refresh_token: "".to_string(),
+        access_token: jwt::Claims::new(&user).encode()?,
+        refresh_token: "".to_string(), // TODO: implement refresh token
     }))
 }
