@@ -1,6 +1,6 @@
 use crate::{
     error::Error,
-    prisma::{session, user, PrismaClient},
+    prisma::{identity, session, PrismaClient},
 };
 use sha3::{Digest, Sha3_256};
 
@@ -31,8 +31,8 @@ pub async fn regenerate_token_pair(
         .ok_or(Error::NotFound)?;
 
     let user = prisma
-        .user()
-        .find_unique(user::id::equals(old_session.user_id))
+        .identity()
+        .find_unique(identity::id::equals(old_session.user_id))
         .exec()
         .await?
         .ok_or(Error::NotFound)?;

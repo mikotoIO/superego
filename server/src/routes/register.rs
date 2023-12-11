@@ -2,7 +2,7 @@ use rocket::{serde::json::Json, State};
 
 use crate::{
     error::Error,
-    prisma::{user, PrismaClient},
+    prisma::{identity, PrismaClient},
 };
 
 #[derive(Debug, Deserialize)]
@@ -21,7 +21,7 @@ pub async fn register(db: &State<PrismaClient>, data: Json<RegisterRequest>) -> 
     db._transaction()
         .run::<Error, _, _, _>(|db| async move {
             let user = db
-                .user()
+                .identity()
                 .create(
                     data.username.clone().to_lowercase(),
                     data.username.clone(),
@@ -34,7 +34,7 @@ pub async fn register(db: &State<PrismaClient>, data: Json<RegisterRequest>) -> 
                 .create(
                     data.email.clone().trim().to_lowercase(),
                     bcrypt::hash(&data.password, bcrypt::DEFAULT_COST)?,
-                    user::id::equals(user.id.clone()),
+                    identity::id::equals(user.id.clone()),
                     vec![],
                 )
                 .exec()

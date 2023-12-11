@@ -3,7 +3,7 @@ use rocket::{serde::json::Json, State};
 use crate::{
     error::Error,
     functions::jwt,
-    prisma::{credential, user, PrismaClient},
+    prisma::{credential, identity, PrismaClient},
 };
 
 #[derive(Debug, Deserialize)]
@@ -41,8 +41,8 @@ pub async fn login(
     }
 
     let user = db
-        .user()
-        .find_unique(user::id::equals(credential.id))
+        .identity()
+        .find_unique(identity::id::equals(credential.id))
         .exec()
         .await?
         .ok_or(Error::NotFound)?;

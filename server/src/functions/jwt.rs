@@ -1,20 +1,19 @@
+use std::env;
+
 use lazy_static::lazy_static;
 
 use jsonwebtoken::{Algorithm, EncodingKey, Header};
 
-use crate::prisma::user;
+use crate::prisma::identity;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    exp: u64, // Required (validate_exp defaults to true in validation). Expiration time (as UTC timestamp)
-    sub: String, // Optional. Subject (whom token refers to)
-
-              // aud: String, // Audience
-              // iss: String, // Optional. Issuer
+    exp: u64,    // Expires at
+    sub: String, // Identity ID
 }
 
 impl Claims {
-    pub fn new(user: &user::Data) -> Self {
+    pub fn new(user: &identity::Data) -> Self {
         Claims {
             // 1 hour expiration
             exp: jsonwebtoken::get_current_timestamp() + 60 * 60,
@@ -29,5 +28,7 @@ impl Claims {
 
 lazy_static! {
     static ref HEADER: Header = Header::new(Algorithm::HS256);
-    static ref ENCODING_KEY: EncodingKey = EncodingKey::from_secret("secret".as_ref());
+    // global secret variable
+    static ref SECRET: String = env::var("SECRET").expect("SECRET must be set");
+    static ref ENCODING_KEY: EncodingKey = EncodingKey::from_secret(SECRET.as_ref());
 }
