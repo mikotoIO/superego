@@ -15,7 +15,7 @@ enum User {
 enum Credential {
     Table,
     Id, // is user id
-    Username,
+    Email,
     Passhash,
 }
 
@@ -70,11 +70,7 @@ impl MigrationTrait for Migration {
                     .table(Credential::Table)
                     .if_not_exists()
                     .col(id_def(&mut ColumnDef::new(Credential::Id)))
-                    .col(
-                        ColumnDef::new(Credential::Username)
-                            .string_len(256)
-                            .not_null(),
-                    )
+                    .col(ColumnDef::new(Credential::Email).string_len(256).not_null())
                     .col(
                         ColumnDef::new(Credential::Passhash)
                             .string_len(256)
