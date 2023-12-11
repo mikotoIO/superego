@@ -26,7 +26,8 @@ async fn rocket() -> _ {
         routes![
             routes::index,
             routes::register::register,
-            routes::login::login
+            routes::login::login,
+            routes::refresh::refresh,
         ],
     )
 }
