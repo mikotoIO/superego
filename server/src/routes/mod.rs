@@ -5,8 +5,8 @@ pub mod register;
 
 #[derive(Serialize)]
 pub struct AppInfo {
-    name: String,
-    version: String,
+    pub name: String,
+    pub version: String,
 }
 
 #[get("/")]

@@ -2,7 +2,7 @@ use std::env;
 
 use lazy_static::lazy_static;
 
-use jsonwebtoken::{Algorithm, EncodingKey, Header};
+use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 
 use crate::prisma::identity;
 
@@ -24,11 +24,20 @@ impl Claims {
     pub fn encode(&self) -> Result<String, jsonwebtoken::errors::Error> {
         jsonwebtoken::encode(&HEADER, self, &ENCODING_KEY)
     }
+
+    pub fn decode(token: &str) -> Result<Self, jsonwebtoken::errors::Error> {
+        jsonwebtoken::decode(token, &DECODING_KEY, &VALIDATION).map(|data| data.claims)
+    }
 }
 
 lazy_static! {
-    static ref HEADER: Header = Header::new(Algorithm::HS256);
+    static ref ALGORITHM: Algorithm = Algorithm::HS256;
+
+    static ref HEADER: Header = Header::new(*ALGORITHM);
     // global secret variable
     static ref SECRET: String = env::var("SECRET").expect("SECRET must be set");
+
     static ref ENCODING_KEY: EncodingKey = EncodingKey::from_secret(SECRET.as_ref());
+    static ref DECODING_KEY: DecodingKey = DecodingKey::from_secret(SECRET.as_ref());
+    static ref VALIDATION: Validation = Validation::new(*ALGORITHM);
 }

@@ -2,21 +2,37 @@ use crate::{
     error::Error,
     prisma::{identity, session, PrismaClient},
 };
+use base64::{
+    engine::{GeneralPurpose, GeneralPurposeConfig},
+    Engine,
+};
 use sha3::{Digest, Sha3_256};
 
 use super::jwt::Claims;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref B64: GeneralPurpose =
+        GeneralPurpose::new(&base64::alphabet::URL_SAFE, GeneralPurposeConfig::new());
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenPair {
-    access_token: String,
-    refresh_token: String,
+    pub access_token: String,
+    pub refresh_token: String,
 }
 
 pub fn sha3_digest(data: &str) -> String {
     let mut hasher = Sha3_256::new();
     hasher.update(data);
-    format!("{:x}", hasher.finalize())
+    B64.encode(&hasher.finalize())
+}
+
+pub fn random_base64(num_bytes: usize) -> Result<String, Error> {
+    let mut random_vec = vec![0u8; num_bytes];
+    getrandom::getrandom(&mut random_vec).map_err(|_| Error::InternalServerError)?;
+    Ok(B64.encode(random_vec))
 }
 
 pub async fn regenerate_token_pair(
@@ -37,8 +53,44 @@ pub async fn regenerate_token_pair(
         .await?
         .ok_or(Error::NotFound)?;
 
+    // the client gets the raw refresh token, while the server stores the SHA3 digest
+    let refresh_token = random_base64(32)?;
+    let digest = sha3_digest(&refresh_token);
+
+    prisma
+        .session()
+        .update(
+            session::id::equals(old_session.id),
+            vec![session::token::set(digest.clone())],
+        )
+        .exec()
+        .await?;
+
     Ok(TokenPair {
         access_token: Claims::new(&user).encode()?,
-        refresh_token: "".to_string(),
+        refresh_token,
+    })
+}
+
+pub async fn create_session(
+    prisma: &PrismaClient,
+    identity: identity::Data,
+) -> Result<TokenPair, Error> {
+    let refresh_token = random_base64(32)?;
+    let digest = sha3_digest(&refresh_token);
+
+    prisma
+        .session()
+        .create(
+            digest.clone(),
+            identity::id::equals(identity.id.clone()),
+            vec![],
+        )
+        .exec()
+        .await?;
+
+    Ok(TokenPair {
+        access_token: Claims::new(&identity).encode()?,
+        refresh_token,
     })
 }

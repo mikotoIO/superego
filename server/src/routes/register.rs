@@ -2,25 +2,30 @@ use rocket::{serde::json::Json, State};
 
 use crate::{
     error::Error,
+    functions::session::{create_session, TokenPair},
     prisma::{identity, PrismaClient},
 };
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RegisterRequest {
-    email: String,
-    username: String,
-    password: String,
-    captcha: Option<String>,
+    pub email: String,
+    pub username: String,
+    pub password: String,
+    pub captcha: Option<String>,
 }
 
 #[post("/register", data = "<data>")]
-pub async fn register(db: &State<PrismaClient>, data: Json<RegisterRequest>) -> Result<(), Error> {
+pub async fn register(
+    db: &State<PrismaClient>,
+    data: Json<RegisterRequest>,
+) -> Result<Json<TokenPair>, Error> {
     let db = db.inner();
 
-    db._transaction()
+    let (identity, _) = db
+        ._transaction()
         .run::<Error, _, _, _>(|db| async move {
-            let user = db
+            let identity = db
                 .identity()
                 .create(
                     data.username.clone().to_lowercase(),
@@ -34,15 +39,15 @@ pub async fn register(db: &State<PrismaClient>, data: Json<RegisterRequest>) -> 
                 .create(
                     data.email.clone().trim().to_lowercase(),
                     bcrypt::hash(&data.password, bcrypt::DEFAULT_COST)?,
-                    identity::id::equals(user.id.clone()),
+                    identity::id::equals(identity.id.clone()),
                     vec![],
                 )
                 .exec()
                 .await?;
 
-            Ok((user, credential))
+            Ok((identity, credential))
         })
         .await?;
 
-    Ok(())
+    Ok(Json(create_session(db, identity).await?))
 }

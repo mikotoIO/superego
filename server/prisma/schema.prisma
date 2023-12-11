@@ -29,12 +29,12 @@ model Credential {
 }
 
 model Session {
-    id        String   @id @default(uuid()) @db.Uuid
-    userId    String   @db.Uuid
-    token     String   @unique @db.String(256)
-    user      Identity @relation(fields: [userId], references: [id], onDelete: Cascade)
-    createdAt DateTime @default(now()) @db.Timestamp
-    expiresAt DateTime @db.Timestamp
+    id        String    @id @default(uuid()) @db.Uuid
+    userId    String    @db.Uuid
+    token     String    @unique @db.String(256)
+    user      Identity  @relation(fields: [userId], references: [id], onDelete: Cascade)
+    createdAt DateTime  @default(now()) @db.Timestamp
+    expiresAt DateTime? @db.Timestamp
 }
 
 model Service {

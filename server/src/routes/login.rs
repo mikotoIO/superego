@@ -2,30 +2,23 @@ use rocket::{serde::json::Json, State};
 
 use crate::{
     error::Error,
-    functions::jwt,
+    functions::session::{create_session, TokenPair},
     prisma::{credential, identity, PrismaClient},
 };
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LoginRequest {
-    email: String,
-    password: String,
-    captcha: Option<String>,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LoginResponse {
-    access_token: String,
-    refresh_token: String,
+    pub email: String,
+    pub password: String,
+    pub captcha: Option<String>,
 }
 
 #[post("/login", data = "<data>")]
 pub async fn login(
     db: &State<PrismaClient>,
     data: Json<LoginRequest>,
-) -> Result<Json<LoginResponse>, Error> {
+) -> Result<Json<TokenPair>, Error> {
     let db = db.inner();
 
     let credential = db
@@ -40,15 +33,12 @@ pub async fn login(
         return Err(Error::WrongCredentials);
     }
 
-    let user = db
+    let identity = db
         .identity()
         .find_unique(identity::id::equals(credential.id))
         .exec()
         .await?
         .ok_or(Error::NotFound)?;
 
-    Ok(Json(LoginResponse {
-        access_token: jwt::Claims::new(&user).encode()?,
-        refresh_token: "".to_string(), // TODO: implement refresh token
-    }))
+    Ok(Json(create_session(db, identity).await?))
 }
