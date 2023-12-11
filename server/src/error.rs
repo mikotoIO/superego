@@ -1,5 +1,6 @@
 use std::io::Cursor;
 
+use bcrypt::BcryptError;
 use rocket::http::{ContentType, Status};
 use rocket::request::Request;
 use rocket::response::{self, Responder, Response};
@@ -9,6 +10,8 @@ use rocket::response::{self, Responder, Response};
 pub enum Error {
     NotFound,
     WrongCredentials,
+    CaptchaFailed,
+    DatabaseError,
     InternalServerError,
 }
 
@@ -18,6 +21,7 @@ impl<'r> Responder<'r, 'r> for Error {
         let status = match self {
             Error::NotFound => Status::NotFound,
             Error::WrongCredentials => Status::Unauthorized,
+            Error::CaptchaFailed => Status::UnprocessableEntity,
             _ => Status::InternalServerError,
         };
 
@@ -32,6 +36,12 @@ impl<'r> Responder<'r, 'r> for Error {
 
 impl From<sea_orm::error::DbErr> for Error {
     fn from(_: sea_orm::error::DbErr) -> Self {
+        Error::DatabaseError
+    }
+}
+
+impl From<BcryptError> for Error {
+    fn from(_: BcryptError) -> Self {
         Error::InternalServerError
     }
 }

@@ -20,3 +20,6 @@ sea-orm = { version = "0.12", features = [
     "sqlx-sqlite",
     "sqlx-postgres",
 ] }
+bcrypt = "0.15.0"
+hcaptcha = "2.2.2"
+mail = "0.7.0"

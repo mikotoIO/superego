@@ -7,7 +7,7 @@ pub struct Migration;
 enum User {
     Table,
     Id,
-    UserName,
+    Username,
     DisplayName,
 }
 
@@ -53,12 +53,17 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(id_def(&mut ColumnDef::new(User::Id)))
                     .col(
-                        ColumnDef::new(User::UserName)
+                        ColumnDef::new(User::Username)
                             .string_len(64)
                             .not_null()
                             .unique_key(),
                     )
-                    .col(ColumnDef::new(User::DisplayName).string_len(64).not_null())
+                    .col(
+                        ColumnDef::new(User::DisplayName)
+                            .string_len(64)
+                            .not_null()
+                            .unique_key(),
+                    )
                     .to_owned(),
             )
             .await?;
