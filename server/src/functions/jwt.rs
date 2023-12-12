@@ -1,5 +1,3 @@
-use std::env;
-
 use lazy_static::lazy_static;
 
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
@@ -11,6 +9,12 @@ pub struct Claims {
     exp: u64,    // Expires at
     sub: String, // Identity ID
     aud: String, // Service Key Domain
+}
+
+lazy_static! {
+    static ref ALGORITHM: Algorithm = Algorithm::HS256;
+    static ref HEADER: Header = Header::new(*ALGORITHM);
+    static ref VALIDATION: Validation = Validation::new(*ALGORITHM);
 }
 
 impl Claims {
@@ -42,16 +46,4 @@ impl Claims {
         )
         .map(|data| data.claims)
     }
-}
-
-lazy_static! {
-    static ref ALGORITHM: Algorithm = Algorithm::HS256;
-
-    static ref HEADER: Header = Header::new(*ALGORITHM);
-    // global secret variable
-    static ref SECRET: String = env::var("SECRET").expect("SECRET must be set");
-
-    static ref ENCODING_KEY: EncodingKey = EncodingKey::from_secret(SECRET.as_ref());
-    static ref DECODING_KEY: DecodingKey = DecodingKey::from_secret(SECRET.as_ref());
-    static ref VALIDATION: Validation = Validation::new(*ALGORITHM);
 }

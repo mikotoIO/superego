@@ -1,3 +1,4 @@
+use functions::bootstrap;
 use prisma::PrismaClient;
 
 use dotenv::dotenv;
@@ -20,6 +21,8 @@ async fn rocket() -> _ {
     dotenv().ok();
 
     let db = PrismaClient::_builder().build().await.unwrap();
+
+    functions::bootstrap::bootstrap(&db).await;
 
     rocket::build().manage(db).mount(
         "/",
