@@ -21,6 +21,7 @@ bcrypt = "0.15.0"
 hcaptcha = "2.2.2"
 mail = "0.7.0"
 jsonwebtoken = "9.2.0"
+didkit = "0.6.0"
 
 [dependencies.prisma-client-rust]
 git = "https://github.com/Brendonovich/prisma-client-rust"

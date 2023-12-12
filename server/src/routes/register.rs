@@ -9,6 +9,7 @@ use crate::{
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RegisterRequest {
+    pub domain: String,
     pub email: String,
     pub username: String,
     pub password: String,
@@ -22,6 +23,8 @@ pub async fn register(
 ) -> Result<Json<TokenPair>, Error> {
     let db = db.inner();
 
+    let domain = data.domain.clone();
+
     let (identity, _) = db
         ._transaction()
         .run::<Error, _, _, _>(|db| async move {
@@ -34,6 +37,7 @@ pub async fn register(
                 )
                 .exec()
                 .await?;
+
             let credential = db
                 .credential()
                 .create(
@@ -49,5 +53,5 @@ pub async fn register(
         })
         .await?;
 
-    Ok(Json(create_session(db, identity).await?))
+    Ok(Json(create_session(db, domain, identity).await?))
 }

@@ -29,19 +29,39 @@ model Credential {
 }
 
 model Session {
-    id        String    @id @default(uuid()) @db.Uuid
-    userId    String    @db.Uuid
+    id String @id @default(uuid()) @db.Uuid
+
     token     String    @unique @db.String(256)
-    user      Identity  @relation(fields: [userId], references: [id], onDelete: Cascade)
     createdAt DateTime  @default(now()) @db.Timestamp
     expiresAt DateTime? @db.Timestamp
+
+    userId String   @db.Uuid
+    user   Identity @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    serviceKeyId String     @db.Uuid
+    serviceKey   ServiceKey @relation(fields: [serviceKeyId], references: [id], onDelete: Cascade)
 }
 
 model Service {
-    id          String    @id @default(uuid()) @db.Uuid
-    name        String    @unique @db.String(64)
-    description String?   @db.String(256)
-    domain      String    @unique @db.String(128)
-    ownerID     String?   @db.Uuid
-    owner       Identity? @relation(fields: [ownerID], references: [id])
+    id          String      @id @default(uuid()) @db.Uuid
+    name        String      @unique @db.String(64)
+    description String?     @db.String(256)
+    domain      String      @unique @db.String(128)
+    ownerID     String?     @db.Uuid
+    owner       Identity?   @relation(fields: [ownerID], references: [id])
+    ServiceKey  ServiceKey?
+}
+
+// The key used to sign the JWTs for a service
+model ServiceKey {
+    id String @id @default(uuid()) @db.Uuid
+
+    serviceId String  @unique @db.Uuid
+    service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+    algorithm  String    @db.String(64)
+    domain     String    @unique @db.String(128)
+    signingKey String    @db.String(1024)
+    publicKey  String?   @db.String(1024)
+    Session    Session[]
 }

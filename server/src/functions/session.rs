@@ -1,6 +1,6 @@
 use crate::{
     error::Error,
-    prisma::{identity, session, PrismaClient},
+    prisma::{identity, service_key, session, PrismaClient},
 };
 use base64::{
     engine::{GeneralPurpose, GeneralPurposeConfig},
@@ -57,7 +57,7 @@ pub async fn regenerate_token_pair(
     let refresh_token = random_base64(32)?;
     let digest = sha3_digest(&refresh_token);
 
-    prisma
+    let session = prisma
         .session()
         .update(
             session::id::equals(old_session.id),
@@ -66,14 +66,22 @@ pub async fn regenerate_token_pair(
         .exec()
         .await?;
 
+    let domain = prisma
+        .service_key()
+        .find_unique(service_key::id::equals(session.service_key_id))
+        .exec()
+        .await?
+        .ok_or(Error::NotFound)?;
+
     Ok(TokenPair {
-        access_token: Claims::new(&user).encode()?,
+        access_token: Claims::new(&user, &domain).encode(domain)?,
         refresh_token,
     })
 }
 
 pub async fn create_session(
     prisma: &PrismaClient,
+    domain: String,
     identity: identity::Data,
 ) -> Result<TokenPair, Error> {
     let refresh_token = random_base64(32)?;
@@ -84,13 +92,21 @@ pub async fn create_session(
         .create(
             digest.clone(),
             identity::id::equals(identity.id.clone()),
+            service_key::domain::equals(domain.clone()),
             vec![],
         )
         .exec()
         .await?;
 
+    let domain = prisma
+        .service_key()
+        .find_unique(service_key::domain::equals(domain))
+        .exec()
+        .await?
+        .ok_or(Error::NotFound)?;
+
     Ok(TokenPair {
-        access_token: Claims::new(&identity).encode()?,
+        access_token: Claims::new(&identity, &domain).encode(domain)?,
         refresh_token,
     })
 }

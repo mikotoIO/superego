@@ -9,6 +9,7 @@ use crate::{
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LoginRequest {
+    pub domain: String, // defaults to ROOT_SERVICE
     pub email: String,
     pub password: String,
     pub captcha: Option<String>,
@@ -40,5 +41,7 @@ pub async fn login(
         .await?
         .ok_or(Error::NotFound)?;
 
-    Ok(Json(create_session(db, identity).await?))
+    Ok(Json(
+        create_session(db, data.domain.clone(), identity).await?,
+    ))
 }
