@@ -1,4 +1,3 @@
-use functions::bootstrap;
 use prisma::PrismaClient;
 
 use dotenv::dotenv;
@@ -9,6 +8,8 @@ extern crate rocket;
 extern crate serde;
 #[macro_use]
 extern crate serde_json;
+#[macro_use]
+extern crate lazy_static;
 
 pub mod error;
 pub mod functions;
@@ -22,7 +23,7 @@ async fn rocket() -> _ {
 
     let db = PrismaClient::_builder().build().await.unwrap();
 
-    functions::bootstrap::bootstrap(&db).await;
+    functions::bootstrap::bootstrap(&db).await.unwrap();
 
     rocket::build().manage(db).mount(
         "/",

@@ -9,7 +9,6 @@ use base64::{
 use sha3::{Digest, Sha3_256};
 
 use super::jwt::Claims;
-use lazy_static::lazy_static;
 
 lazy_static! {
     static ref B64: GeneralPurpose =

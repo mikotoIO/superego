@@ -1,5 +1,3 @@
-use lazy_static::lazy_static;
-
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 
 use crate::prisma::{identity, service_key};
