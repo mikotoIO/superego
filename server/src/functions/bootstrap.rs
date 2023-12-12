@@ -20,6 +20,7 @@ pub async fn bootstrap(prisma: &PrismaClient) -> Result<(), Error> {
         .await?;
 
     if root_service.is_none() {
+        info!("Root service not found, creating...");
         // create root service
         let root_service = prisma
             .service()
